@@ -120,6 +120,6 @@
     ;; (with-output-to-temp-buffer report-buffer
     ;;   (insert report)
     ;;   )
-    )))
+    ))
 
 (provide 'metewand)
