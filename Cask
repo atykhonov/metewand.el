@@ -6,4 +6,6 @@
 (development
  (depends-on "f")
  (depends-on "s")
- (depends-on "dash"))
+ (depends-on "dash")
+ (depends-on "commander")
+ (depends-on "metewand" :git "https://github.com/atykhonov/metewand.el"))
