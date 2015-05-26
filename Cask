@@ -7,5 +7,6 @@
  (depends-on "f")
  (depends-on "s")
  (depends-on "dash")
+ (depends-on "ansi")
  (depends-on "commander")
  (depends-on "metewand" :git "https://github.com/atykhonov/metewand.el"))
