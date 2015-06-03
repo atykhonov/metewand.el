@@ -1,4 +1,5 @@
 (require 'f)
+(require 'ansi)
 
 (defvar boron-path (f-dirname (f-this-file)))
 
@@ -36,6 +37,15 @@
 (defvar metewand-special-chars '("" "" "" "" "")
   "Special characters.")
 
+(defvar boron-current-feature nil
+  "Temporal variable which holds current feature.")
+
+(defvar boron-current-scenario nil
+  "Temporal variable which holds current scenario.")
+
+(defvar boron-reporter-feature-hooks nil
+  "Feature hooks.")
+
 (defun metewand--trim-string (string)
   "Remove whitespaces in beginning and ending of STRING.
   White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
@@ -46,12 +56,16 @@
   (interactive)
   (let ((win (selected-window))
         (test-buffer (get-buffer-create "*test-buffer*"))
-        (curr-buffer (current-buffer))
+        (report-buffer (get-buffer-create "*boron-report*"))
+        (curr-buffer (buffer-name (current-buffer)))
         (line nil)
         (continue t)
         (start nil)
         (end nil)
-        (pos nil))
+        (pos nil)
+        (lines (list)))
+    (with-current-buffer report-buffer
+      (erase-buffer))
     (with-current-buffer test-buffer
       (erase-buffer))
     (with-current-buffer curr-buffer
@@ -60,7 +74,6 @@
         (setq line (buffer-substring-no-properties
                     (line-beginning-position)
                     (line-end-position)))
-        (message "String: %s" (substring line 0 3))
         (cond ((equal (substring line 0 3) "M-x")
                (let ((begin nil)
                      (end nil))
@@ -91,22 +104,34 @@
                                    (setq result (concat result arg)))
                                  result))
                              (split-string (substring line 4) "" t))))))
-        (when (not (equal (substring line 0 1)  "#"))
-          (unwind-protect
-              (with-current-buffer test-buffer
-                (set-window-buffer win test-buffer t)
-                (execute-kbd-macro
-                 (edmacro-parse-keys line)))
-            (set-window-buffer win curr-buffer t)))
-        (search-forward "\n" nil t)))))
+        (search-forward "\n" nil t)
+        (setq lines (append lines (list line)))))
+    ;; (setq win (selected-window))
+    (pop-to-buffer report-buffer)
+    (setq win (selected-window))
+    (while (> (length lines) 0)
+      (setq line (pop lines))
+      (when (not (equal (substring line 0 1) "#"))
+        (unwind-protect
+            (with-current-buffer test-buffer
+              (set-window-buffer win test-buffer t)
+              (execute-kbd-macro
+               (edmacro-parse-keys line)))
+          (set-window-buffer win report-buffer t)))
+      (sit-for 0.1))))
 
-(defun boron-feature (text text2)
-  (interactive "sText: \nsText2: ")
-  (message "Feature: %s, %s" text text2))
+(defun boron-feature (feature)
+  (interactive "sFeature: ")
+  ;; (add-hook 'boron-reporter-feature-hooks 'boron-reporter-feature)
+  ;; (run-hook-with-args boron-reporter-feature-hooks feature)
+  (boron-reporter-feature feature)
+  (setq boron-current-feature feature))
 
-(defun boron-scenario (text)
-  (interactive "sText: ")
-  (message "Feature: %s" text))
+(defun boron-scenario (scenario)
+  (interactive "sScenario: ")
+  (boron-reporter-scenario scenario)
+  ;; (run-hook-with-args boron-reporter-scenario-hook scenario)
+  (setq boron-current-scenario scenario))
 
 (defun boron-assert-equal (assertion)
   (interactive "sEqual to: ")
@@ -114,12 +139,34 @@
     (if (equal assertion
                (with-current-buffer test-buffer
                  (buffer-substring-no-properties (point-min) (point-max))))
-        (progn
-          (message "Test passed!")
-          (run-hook-with-args boron-reporter-scenario-passed-hook "Test feature"))
-      (progn
-        (message "Test failed!")
-        (run-hook-with-args boron-reporter-scenario-failed-hook "Test feature")))))
+        (boron-reporter-test-passed)
+      (boron-reporter-test-failed))))
+
+(defun boron-assert-buffer-contains (buffer string)
+  (interactive "bBuffer: \nsString: ")
+  (if (not (equal
+            (with-current-buffer buffer
+              (goto-char (point-min))
+              (search-forward string nil t))
+            nil))
+      (boron-reporter-test-passed)
+    (boron-reporter-test-failed)))
+
+(defun boron-reporter-test-passed ()
+  (with-current-buffer (get-buffer-create "*boron-report*")
+    (insert (concat "*** Test passed!" "\n"))))
+
+(defun boron-reporter-test-failed ()
+  (with-current-buffer (get-buffer-create "*boron-report*")
+    (insert (concat "*** Test failed!" "\n"))))
+
+(defun boron-reporter-feature (feature)
+  (with-current-buffer (get-buffer-create "*boron-report*")
+    (insert (concat "* " feature "\n"))))
+
+(defun boron-reporter-scenario (scenario)
+  (with-current-buffer (get-buffer-create "*boron-report*")
+    (insert (concat "** " scenario "\n"))))
 
 (defun boron-insert (text)
   (interactive "sText: ")
@@ -151,7 +198,6 @@
       (kill-buffer report-buffer))
     (while continue
       (with-current-buffer curr-buffer
-        (message "1")
         (dolist (char metewand-special-chars)
           (goto-char (+ current-pos 1))
           (setq next-char-pos (search-forward char nil t))
