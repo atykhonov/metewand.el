@@ -1,16 +1,11 @@
 M-x boron-feature RET "Smooth UI for Google Translate" RET
 M-x boron-insert RET "Lorem Ipsum is simply dummy text of the printing" RET
+
 M-x boron-scenario RET "Translate a word at point" RET
-# M-: (goto-char 1)
-# M-x search-forward RET dummy RET
-# M-x google-translate-smooth-translate RET C-l C-n C-n book
-# M-: (insert "Test Best Rest")
-# M-x boron-scenario RET Test forward word
-# M-x boron-scenario RET Test best rest
-# M-x boron-insert RET "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
 M-x search-backward RET text
 M-x google-translate-smooth-translate RET RET
 M-x boron-assert-buffer-contains RET "*Google Translate*" RET текст
-# M-x Test Best Rest "test"
-# tao sth staoh
-# snatohe tnh santohe sthth th
+
+M-x boron-scenario RET "Translate from english to ukraine." RET
+M-x google-translate-smooth-translate RET C-l C-n C-n book
+M-x boron-assert-buffer-contains RET "*Google Translate*" RET книга
