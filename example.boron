@@ -8,7 +8,7 @@ M-x boron-scenario RET "Translate a word at point" RET
 # M-x boron-scenario RET Test forward word
 # M-x boron-scenario RET Test best rest
 # M-x boron-insert RET "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
-M-: (forward-word -4)
+M-x search-backward RET text
 M-x google-translate-smooth-translate RET RET
 M-x boron-assert-buffer-contains RET "*Google Translate*" RET текст
 # M-x Test Best Rest "test"

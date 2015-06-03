@@ -63,7 +63,8 @@
         (start nil)
         (end nil)
         (pos nil)
-        (lines (list)))
+        (lines (list))
+        (config nil))
     (with-current-buffer report-buffer
       (erase-buffer))
     (with-current-buffer test-buffer
@@ -108,6 +109,7 @@
         (setq lines (append lines (list line)))))
     ;; (setq win (selected-window))
     (pop-to-buffer report-buffer)
+    (setq config (current-window-configuration))
     (setq win (selected-window))
     (while (> (length lines) 0)
       (setq line (pop lines))
@@ -118,7 +120,8 @@
               (execute-kbd-macro
                (edmacro-parse-keys line)))
           (set-window-buffer win report-buffer t)))
-      (sit-for 0.1))))
+      (sit-for 0.1))
+    (set-window-configuration config)))
 
 (defun boron-feature (feature)
   (interactive "sFeature: ")
